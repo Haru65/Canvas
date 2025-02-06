@@ -38,10 +38,15 @@ router.post("/api/login", async (req, res) => {
         return res.status(400).json({ message: "Username and password are required" });
     }
 
-    const user = await data.findOne({ username });
-    
+    const user = await data.findOne({ username:username });
+    console.log(user)
+    if(user){
+        console.log("userfound")
+        return res.json({message:"found"})
+    }else return res.json({message:"not found"})
+}
 
    
-});
+);
 
 export default router

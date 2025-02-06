@@ -19,11 +19,9 @@ const Signup = () => {
                     Name,
                     Email,
                     Password
-                }, {
-                    timeout: 5000  // Increase timeout (in ms)
                 }).then(res=>{
                     if(res.data = "created"){
-                        histroy("/login")
+                        histroy("/")
                     }
                 });
                 console.log("Signup successful");

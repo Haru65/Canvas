@@ -3,7 +3,9 @@ import mongoose from "mongoose";
 
 //Set up default mongoose connection
 const mongoDB = 'mongodb://localhost:27017/canvas';
-mongoose.connect(mongoDB, { useNewUrlParser: true });
+mongoose.connect(mongoDB, { useNewUrlParser: true }).then(()=>{
+    console.log("mongodb connected")
+})
 const dataset = mongoose.Schema({
     username:{
         type:String,

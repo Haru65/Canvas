@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Canvas,Rect ,Circle} from 'fabric';
+import { Canvas,Rect ,Circle, PencilBrush} from 'fabric';
 import "./Home.css"
 
 const Home = () => {
@@ -8,15 +8,20 @@ const [canva,setcanva] = useState(null)
 
 useEffect(()=>{
     if (canvasref.current) {
+
         const initcanva = new Canvas(canvasref.current,{
+        
             width:1200,
             height:700,
             
         })
+        
+        initcanva.isDrawingMode = false
         initcanva.backgroundColor="#fff",
         initcanva.renderAll()
-        setcanva(initcanva);
         
+        setcanva(initcanva);
+    
         return ()=>(
             initcanva.dispose()
         )
@@ -46,8 +51,18 @@ const addrect=() =>{
     }
 
 }
-
-
+const Drawing =() =>{
+    
+    if(canva){
+        canva.isDrawingMode = !canva.isDrawingMode;
+        if(canva.isDrawingMode){
+            canva.freeDrawingBrush = new PencilBrush(canva);
+            canva.freeDrawingBrush.color = "red"; // Brush color
+    canva.freeDrawingBrush.width = 5; 
+        } 
+        setIsDrawing(canva.isDrawingMode);
+    }
+}
 
 
     return (
@@ -59,7 +74,7 @@ const addrect=() =>{
             <button onClick={addcircle}  >
                 click me
             </button>
-            <button onClick={addrect}>
+            <button onClick={Drawing}>
                 rect
             </button>
       </div>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router';
 import "./login.css"; // Keep this as is if your CSS file is named login.css
 import axios from 'axios';
 import { BrowserRouter as Router, Route, Routes, Link, BrowserRouter } from 'react-router-dom';
@@ -6,19 +7,23 @@ const Login = () => {
     const [password, setPassword] = useState("");
     const [message, setMessage] = useState("");
     const [username, setUsername] = useState("");
-
+    const histroy = useNavigate()
     const check = () => {
         setMessage(password ? "" : "Password is required");
     };
-    const handleLogin = () => {
-        navigate("/home"); // Navigate to Home after login
-      };
+   
     const submit = async () => {
         try {
             await axios.post("http://localhost:3001/api/login", {
                 username,
                 password,
-            });
+            }).then( res =>{
+                if(res.data.message  === "found"){
+                    histroy("/home")
+                }
+            }
+             
+            )
             console.log("Signup successful");
         } catch (e) {
             console.error("Signup error:", e);
