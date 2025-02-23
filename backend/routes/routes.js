@@ -1,15 +1,18 @@
 import express, { Router } from "express";
 import data from "../model/schema.js"
-
+import bcrypt from "bcrypt"
 const app = express()
 const router = express.Router()
 
 
 
 router.post("/api/signup",async(req,res)=>{
-    const {Name,UserName,Email,Password} = req.body;
-    console.log('Login request received:', req.body);
-    if(!Name||!UserName|| !Email||!Password) return res.status(400).json({Message:"name email password rerquired"})
+
+    const password = req.body.Password
+    const {Name,UserName,Email} = req.body;
+    const salt = await bcrypt.genSalt()
+    const hashedpass = await bcrypt.hash(password,salt)
+    console.log(hashedpass)
         
         
     const User = await data.findOne({ UserName });
@@ -20,7 +23,7 @@ router.post("/api/signup",async(req,res)=>{
         username:req.body.UserName,
         Email:req.body.Email,
         Name:req.body.Name,
-        password:req.body.Password,
+        password:hashedpass
     })
 
 
@@ -40,10 +43,15 @@ router.post("/api/login", async (req, res) => {
 
     const user = await data.findOne({ username:username });
     console.log(user)
-    if(user){
-        console.log("userfound")
-        return res.json({message:"found"})
-    }else return res.json({message:"not found"})
+    if(!user) return res.json({message:"not found"}).status(500)
+
+    try{
+        if(await bcrypt.compare(req.body.password , user.password)){
+            res.json({message:"found"})
+        }else res.json({message:"not found"})
+    }catch{
+        res.status(500)
+    }
 }
 
    

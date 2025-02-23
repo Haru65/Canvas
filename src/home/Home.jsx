@@ -5,28 +5,83 @@ import "./Home.css"
 const Home = () => {
 const canvasref = useRef(null)
 const [canva,setcanva] = useState(null)
+const [selectedobject, setSelectedObject] = useState(null);
+  const [width, setWidth] = useState(null);
+  const [height, setHeight] = useState("");
+  const [diameter, setDiameter] = useState("");
+  const [colour, setColor] = useState("");
+  const size = window.innerHeight 
+  useEffect(()=>{
+      if (canvasref.current) {
+  
+          const initcanva = new Canvas(canvasref.current,{
+          
+              width:1200,
+              height:size
+              
+              
+          })
+          
+          initcanva.isDrawingMode = false
+          initcanva.backgroundColor="#d1d1d1",
+          initcanva.renderAll()
+          
+          setcanva(initcanva);
+      
+          return ()=>(
+              initcanva.dispose()
+          )
+      }
+  },[])
 
-useEffect(()=>{
-    if (canvasref.current) {
+  useEffect(() => {
+    if (!canva) return;
 
-        const initcanva = new Canvas(canvasref.current,{
-        
-            width:1200,
-            height:700,
-            
-        })
-        
-        initcanva.isDrawingMode = false
-        initcanva.backgroundColor="#fff",
-        initcanva.renderAll()
-        
-        setcanva(initcanva);
-    
-        return ()=>(
-            initcanva.dispose()
-        )
+    // Selection Updated
+    canva.on("selection:updated", (event) => {
+      handleObjectSelection(event.selected[0]);
+    });
+
+    // Selection Cleared
+    canva.on("selection:cleared", () => {
+      setSelectedObject(null);
+      clearSettings();
+    });
+
+    // Object Modified
+    canva.on("object:modified", (event) => {
+      handleObjectSelection(event.target);
+    });
+
+    // Object Scaling
+    canva.on("object:scaling", (event) => {
+      handleObjectSelection(event.target);
+    });
+  }, [canva]);
+
+  const handleObjectSelection = (object) => {
+    if (!object) return;
+
+    setSelectedObject(object);
+
+    if (object.type === "rect") {
+      setWidth(Math.round(object.width * object.scaleX));
+      setHeight(Math.round(object.height * object.scaleY));
+      setColor(object.fill);
+      setDiameter("");
+    } else if (object.type === "circle") {
+      setDiameter(Math.round(object.diameter * 2 * object.scaleX));
+      setColor(object.fill);
+      setHeight("");
+      setWidth("");
     }
-},[])
+  };
+  const clear = () => {
+    setHeight("");
+    setWidth("");
+    setDiameter("");
+    setColor("");
+  };
  const addcircle=()=>{
     if(canva){
         console.log("canva is loaded")
@@ -70,13 +125,16 @@ const Drawing =() =>{
       <div className='app'>
 
            <canvas className='canvas' id='canvas' ref={canvasref}/>
-       
-            <button onClick={addcircle}  >
-                click me
-            </button>
-            <button onClick={Drawing}>
-                rect
-            </button>
+           <div className='features'>
+            <button onClick={addrect} > rect </button>
+           <button onClick={addcircle}> circle </button>
+            <input value={width } label="width" onChange={(e) => setWidth(e.target.value)} />
+            <input value={height} label="height" />
+            <input value={diameter} label="diameter" />
+            <input value={colour} label="colour" />
+            <input value={selectedobject} label="selectedobject" />
+            </div>
+           
       </div>
 </>
         
