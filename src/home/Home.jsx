@@ -1,147 +1,160 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Canvas,Rect ,Circle, PencilBrush} from 'fabric';
-import "./Home.css"
+import { Canvas, Rect, Circle, PencilBrush } from 'fabric';
+import "./Home.css";
 
 const Home = () => {
-const canvasref = useRef(null)
-const [canva,setcanva] = useState(null)
-const [selectedobject, setSelectedObject] = useState(null);
-  const [width, setWidth] = useState(null);
-  const [height, setHeight] = useState("");
-  const [diameter, setDiameter] = useState("");
-  const [colour, setColor] = useState("");
-  const size = window.innerHeight 
-  useEffect(()=>{
-      if (canvasref.current) {
-  
-          const initcanva = new Canvas(canvasref.current,{
-          
-              width:1200,
-              height:size
-              
-              
-          })
-          
-          initcanva.isDrawingMode = false
-          initcanva.backgroundColor="#d1d1d1",
-          initcanva.renderAll()
-          
-          setcanva(initcanva);
-      
-          return ()=>(
-              initcanva.dispose()
-          )
-      }
-  },[])
+  const canvasref = useRef(null);
+  const [canva, setcanva] = useState(null);
+  const [selectedobject, setSelectedObject] = useState(null);
+  const [width, setWidth] = useState(100);
+  const [height, setHeight] = useState(100);
+  const [diameter, setDiameter] = useState(50);
+  const [colour, setColor] = useState("#2F4DC6");
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [brushColor, setBrushColor] = useState("#000000");
+  const [brushSize, setBrushSize] = useState(3);
+  const size = window.innerHeight;
 
   useEffect(() => {
-    if (!canva) return;
+    if (canvasref.current) {
+      const initcanva = new Canvas(canvasref.current, {
+        width: 1200,
+        height: size,
+        backgroundColor: "#f0f0f0",
+      });
+      setcanva(initcanva);
 
-    // Selection Updated
-    canva.on("selection:updated", (event) => {
-      handleObjectSelection(event.selected[0]);
-    });
+      initcanva.on("selection:created", (event) => handleObjectSelection(event.selected[0]));
+      initcanva.on("selection:updated", (event) => handleObjectSelection(event.selected[0]));
+      initcanva.on("selection:cleared", () => setSelectedObject(null));
 
-    // Selection Cleared
-    canva.on("selection:cleared", () => {
-      setSelectedObject(null);
-      clearSettings();
-    });
-
-    // Object Modified
-    canva.on("object:modified", (event) => {
-      handleObjectSelection(event.target);
-    });
-
-    // Object Scaling
-    canva.on("object:scaling", (event) => {
-      handleObjectSelection(event.target);
-    });
-  }, [canva]);
+      return () => initcanva.dispose();
+    }
+  }, []);
 
   const handleObjectSelection = (object) => {
     if (!object) return;
-
     setSelectedObject(object);
-
     if (object.type === "rect") {
-      setWidth(Math.round(object.width * object.scaleX));
-      setHeight(Math.round(object.height * object.scaleY));
-      setColor(object.fill);
-      setDiameter("");
+      setWidth(object.width * object.scaleX);
+      setHeight(object.height * object.scaleY);
     } else if (object.type === "circle") {
-      setDiameter(Math.round(object.diameter * 2 * object.scaleX));
-      setColor(object.fill);
-      setHeight("");
-      setWidth("");
+      setDiameter(object.radius * 2 * object.scaleX);
+    }
+    setColor(object.fill);
+  };
+
+  useEffect(() => {
+    if (!selectedobject) return;
+    selectedobject.set({
+      width: width,
+      height: height,
+      radius: diameter / 2,
+      fill: colour,
+    });
+    canva.renderAll();
+  }, [width, height, diameter, colour]);
+
+  const addCircle = () => {
+    if (canva) {
+      const circle = new Circle({
+        top: 150,
+        left: 150,
+        radius: diameter / 2,
+        fill: colour,
+      });
+      canva.add(circle);
     }
   };
-  const clear = () => {
-    setHeight("");
-    setWidth("");
-    setDiameter("");
-    setColor("");
+
+  const addRectangle = () => {
+    if (canva) {
+      const rect = new Rect({
+        width: width,
+        height: height,
+        fill: colour,
+      });
+      canva.add(rect);
+    }
   };
- const addcircle=()=>{
-    if(canva){
-        console.log("canva is loaded")
-        const circle = new Circle({
-            top:150,
-            left:150,
-            radius:50,
-            fill:"#2F4DC6"
-        })
-        canva.add(circle)
+
+  const toggleDrawing = () => {
+    if (canva) {
+      canva.isDrawingMode = !canva.isDrawingMode;
+      if (canva.isDrawingMode) {
+        const brush = new PencilBrush(canva);
+        brush.color = brushColor;
+        brush.width = brushSize;
+        canva.freeDrawingBrush = brush;
+      }
+      setIsDrawing(canva.isDrawingMode);
     }
+  };
 
-
- }
-const addrect=() =>{
-    if(canva){
-        console.log("canvas is loaded")
-        const rectangle = new Rect({
-            width:70,
-            height:120
-        }); canva.add(rectangle)
+  useEffect(() => {
+    if (canva && canva.isDrawingMode) {
+      canva.freeDrawingBrush.color = brushColor;
+      canva.freeDrawingBrush.width = brushSize;
     }
+  }, [brushColor, brushSize]);
 
-}
-const Drawing =() =>{
-    
-    if(canva){
-        canva.isDrawingMode = !canva.isDrawingMode;
-        if(canva.isDrawingMode){
-            canva.freeDrawingBrush = new PencilBrush(canva);
-            canva.freeDrawingBrush.color = "red"; // Brush color
-    canva.freeDrawingBrush.width = 5; 
-        } 
-        setIsDrawing(canva.isDrawingMode);
+  const exportCanvas = () => {
+    if (canva) {
+      const link = document.createElement("a");
+      link.href = canva.toDataURL({ format: "png" });
+      link.download = "canvas_image.png";
+      link.click();
     }
-}
+  };
 
+  const clearCanvas = () => {
+    if (canva) {
+      canva.clear();
+      canva.backgroundColor = "#f0f0f0";
+      canva.renderAll();
+    }
+  };
 
-    return (
-<>
+  return (
+    <>
       <div className='app'>
-
-           <canvas className='canvas' id='canvas' ref={canvasref}/>
-           <div className='features'>
-            <button onClick={addrect} > rect </button>
-           <button onClick={addcircle}> circle </button>
-            <input value={width } label="width" onChange={(e) => setWidth(e.target.value)} />
-            <input value={height} label="height" />
-            <input value={diameter} label="diameter" />
-            <input value={colour} label="colour" />
-            <input value={selectedobject} label="selectedobject" />
+        <canvas className='canvas' id='canvas' ref={canvasref} />
+        <div className='features'>
+          <button className='btn primary' onClick={addRectangle}>Add Rectangle</button>
+          <button className='btn primary' onClick={addCircle}>Add Circle</button>
+          <button className='btn secondary' onClick={toggleDrawing}>{isDrawing ? "Disable Drawing" : "Enable Drawing"}</button>
+          <button className='btn export-btn' onClick={exportCanvas}>Export</button>
+          <button className='btn danger' onClick={clearCanvas}>Clear</button>
+          <div className='controls'>
+            <div className='control-group'>
+              <label>Width:</label>
+              <input className='input-field' type='number' value={width} onChange={(e) => setWidth(Number(e.target.value))} />
             </div>
-           
+            <div className='control-group'>
+              <label>Height:</label>
+              <input className='input-field' type='number' value={height} onChange={(e) => setHeight(Number(e.target.value))} />
+            </div>
+            <div className='control-group'>
+              <label>Diameter:</label>
+              <input className='input-field' type='number' value={diameter} onChange={(e) => setDiameter(Number(e.target.value))} />
+            </div>
+            <div className='control-group'>
+              <label>Shape Color:</label>
+              <input className='color-picker' type='color' value={colour} onChange={(e) => setColor(e.target.value)} />
+            </div>
+            <div className='control-group'>
+              <label>Brush Color:</label>
+              <input className='color-picker' type='color' value={brushColor} onChange={(e) => setBrushColor(e.target.value)} />
+            </div>
+            <div className='control-group'>
+              <label>Brush Size:</label>
+              <input className='input-field' type='number' value={brushSize} onChange={(e) => setBrushSize(Number(e.target.value))} />
+            </div>
+          </div>
+        </div>
       </div>
-</>
-        
-    
-    );
-}
+    </>
+  );
+};
 
 export default Home;
-
-
